@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+data/local.json
+.railway/
+.pnpm-store/
+npm-debug.log*

@@ -1,0 +1,132 @@
+import React, { useEffect, useMemo, useState } from 'react'
+import { createRoot } from 'react-dom/client'
+import { Rnd } from 'react-rnd'
+import './styles.css'
+
+const DAYS = [
+  ['2026-09-18', '9.18', 'FRI'], ['2026-09-19', '9.19', 'SAT'],
+  ['2026-09-20', '9.20', 'SUN'], ['2026-09-21', '9.21', 'MON']
+]
+const STAGES = [
+  ['main', 'メインステージ', 'MAIN'], ['side', 'サイドステージ', 'SIDE'], ['sub', 'サブステージ', 'SUB']
+]
+const STATUS = {
+  scheduled: ['開始前', 'status-before'], live: ['進行中', 'status-live'], delayed: ['遅延', 'status-delay'], done: ['終了', 'status-done']
+}
+const PX_PER_MIN = 2
+const BOARD_MINUTES = 210
+
+function timeText(minutes) {
+  const total = 21 * 60 + Number(minutes)
+  return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
+}
+function durationText(n) { return n < 60 ? `${n}分` : `${Math.floor(n / 60)}時間${n % 60 ? `${n % 60}分` : ''}` }
+function Icon({ children }) { return <span className="icon" aria-hidden="true">{children}</span> }
+
+function Header({ admin, onAdmin, settings }) {
+  return <>
+    <header className="topbar">
+      <a className="brand" href="#top" aria-label="運動会トップ">
+        <span className="brand-mark"><i /><i /><i /></span>
+        <span>UNDOKAI <b>2026</b></span>
+      </a>
+      <nav aria-label="ページ内メニュー">
+        <a href="#schedule">タイムテーブル</a><a href="#guide">ご案内</a>
+        <button className={admin ? 'admin-button active' : 'admin-button'} onClick={onAdmin}>
+          <Icon>⚙</Icon>{admin ? '運営モード中' : '運営ページ'}
+        </button>
+      </nav>
+    </header>
+    <section className="hero" id="top">
+      <div className="hero-copy">
+        <span className="eyebrow"><i /> OASIS GAME FESTIVAL</span>
+        <h1>{settings.title}</h1>
+        <p>{settings.subtitle}</p>
+        <div className="hero-meta"><span><Icon>◷</Icon> 9.18 FRI — 9.21 MON</span><span><Icon>▶</Icon> 毎晩 21:00 START</span></div>
+      </div>
+      <div className="hero-art" aria-hidden="true"><div className="track"><b>3</b><span>TEAMS</span></div><div className="ball ball-a" /><div className="ball ball-b" /></div>
+    </section>
+  </>
+}
+
+function Login({ onClose, onSuccess }) {
+  const [password, setPassword] = useState(''); const [error, setError] = useState(''); const [busy, setBusy] = useState(false)
+  async function submit(e) {
+    e.preventDefault(); setBusy(true); setError('')
+    try {
+      const r = await fetch('/api/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ password }) })
+      const data = await r.json(); if (!r.ok) throw new Error(data.error)
+      onSuccess(data.token)
+    } catch (e) { setError(e.message || 'ログインできませんでした') } finally { setBusy(false) }
+  }
+  return <div className="modal-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}>
+    <div className="login-card" role="dialog" aria-modal="true" aria-labelledby="login-title">
+      <button className="close" onClick={onClose} aria-label="閉じる">×</button><span className="lock">⚑</span>
+      <p className="eyebrow">STAFF ONLY</p><h2 id="login-title">運営ページ</h2><p>タイムテーブルの編集には<br />運営パスワードが必要です。</p>
+      <form onSubmit={submit}><label>運営パスワード<input autoFocus type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="パスワードを入力" /></label>{error && <p className="error">{error}</p>}<button className="primary" disabled={busy}>{busy ? '確認中…' : '運営モードに入る'} <span>→</span></button></form>
+    </div>
+  </div>
+}
+
+function DayTabs({ day, setDay, events }) {
+  return <div className="day-tabs">{DAYS.map(([key, date, weekday], i) => {
+    const total = events.filter(e => e.date === key).length
+    return <button key={key} className={day === key ? 'selected' : ''} onClick={() => setDay(key)}><small>DAY {i + 1}</small><b>{date}</b><span>{weekday}</span><em>{total} PROGRAMS</em></button>
+  })}</div>
+}
+
+function TeamStandings({ settings, admin, setState }) {
+  const teams = settings.teams || []
+  const ranked = [...teams].sort((a, b) => b.points - a.points)
+  function updateTeam(id, changes) {
+    setState(s => ({ ...s, settings: { ...s.settings, teams: s.settings.teams.map(team => team.id === id ? { ...team, ...changes } : team) } }))
+  }
+  return <section className={admin ? 'team-board editing' : 'team-board'} aria-label="3チーム得点状況"><div className="score-label"><span>TEAM SCORE</span><h3>3チーム得点状況</h3><p>{admin ? 'チーム名と得点を編集できます' : '現在の総合順位'}</p></div>{(admin ? teams : ranked).map((team, i) => <article key={team.id} style={{ '--team': team.color }}><span className="rank">{admin ? 'TEAM' : `0${i + 1}`}</span>{admin ? <input aria-label={`${team.name}の名前`} value={team.name} onChange={e => updateTeam(team.id, { name: e.target.value })} /> : <h4>{team.name}</h4>}<div className="team-points">{admin ? <input aria-label={`${team.name}の得点`} type="number" min="0" value={team.points} onChange={e => updateTeam(team.id, { points: Math.max(0, Number(e.target.value)) })} /> : <b>{team.points}</b>}<span>PTS</span></div></article>)}</section>
+}
+
+function PublicSchedule({ events, day }) {
+  const dayEvents = events.filter(e => e.date === day).sort((a, b) => a.start - b.start)
+  return <div className="public-grid">{STAGES.map(([id, label, en]) => {
+    const list = dayEvents.filter(e => e.stage === id)
+    return <section className={`stage stage-${id}`} key={id}><header><span>{en}</span><h3>{label}</h3><em>{list.length} PROGRAMS</em></header>
+      <div className="event-list">{list.length ? list.map((event, i) => <article className={`event-card ${STATUS[event.status][1]}`} key={event.id}>
+        <div className="event-time"><b>{timeText(event.start)}</b><span>{durationText(event.duration)}</span></div><div className="event-info"><span className="order">PROGRAM {String(i + 1).padStart(2, '0')}</span><h4>{event.title}</h4>{event.note && <p>{event.note}</p>}</div><span className="status-dot">{STATUS[event.status][0]}</span>
+      </article>) : <div className="empty">競技を準備中です</div>}</div>
+    </section>
+  })}</div>
+}
+
+function AdminBoard({ state, setState, day, token, onLogout }) {
+  const [selected, setSelected] = useState(null); const [saving, setSaving] = useState('');
+  const dayEvents = state.events.filter(e => e.date === day)
+  const selectedEvent = state.events.find(e => e.id === selected)
+  function update(id, changes) { setState(s => ({ ...s, events: s.events.map(e => e.id === id ? { ...e, ...changes } : e) })) }
+  function add(stage) { const id = crypto.randomUUID(); setState(s => ({ ...s, events: [...s.events, { id, date: day, stage, title: '新しい競技', start: 0, duration: 30, status: 'scheduled', note: '' }] })); setSelected(id) }
+  function remove() { setState(s => ({ ...s, events: s.events.filter(e => e.id !== selected) })); setSelected(null) }
+  function moveEvent(id, y) { update(id, { start: Math.max(0, Math.round(y / PX_PER_MIN / 5) * 5) }) }
+  function resizeEvent(id, height, y) { update(id, { start: Math.max(0, Math.round(y / PX_PER_MIN / 5) * 5), duration: Math.max(15, Math.round(height / PX_PER_MIN / 5) * 5) }) }
+  async function save() {
+    setSaving('保存中…'); const r = await fetch('/api/state', { method: 'PUT', headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` }, body: JSON.stringify(state) })
+    if (r.ok) { setState(await r.json()); setSaving('保存しました') } else setSaving('保存に失敗しました')
+    setTimeout(() => setSaving(''), 2200)
+  }
+  return <div className="admin-wrap"><div className="admin-toolbar"><div><span className="live-pill">● 運営モード</span><h2>タイムテーブル編集</h2><p>カードを上下にドラッグして開始時刻を変更。下端を伸ばして所要時間を調整できます。</p></div><div className="toolbar-actions"><span>{saving}</span><button className="ghost" onClick={onLogout}>終了</button><button className="primary compact" onClick={save}>変更を保存</button></div></div>
+    <div className="editor-layout"><div className="timeline-editor"><div className="timeline-head"><div className="time-head">TIME</div>{STAGES.map(([id, label, en]) => <div key={id}><span>{en}</span><b>{label}</b><button onClick={() => add(id)} aria-label={`${label}に追加`}>＋</button></div>)}</div>
+      <div className="timeline-body"><div className="time-axis">{Array.from({ length: 8 }, (_, i) => <span style={{ top: i * 30 * PX_PER_MIN }} key={i}>{timeText(i * 30)}</span>)}</div>{STAGES.map(([stage]) => <div className="timeline-lane" key={stage}>{Array.from({ length: 8 }, (_, i) => <i style={{ top: i * 30 * PX_PER_MIN }} key={i} />)}{dayEvents.filter(e => e.stage === stage).map(event => <Rnd key={event.id} className={`editable-event ${selected === event.id ? 'chosen' : ''} ${STATUS[event.status][1]}`} bounds="parent" enableResizing={{ bottom: true }} size={{ width: 'calc(100% - 16px)', height: event.duration * PX_PER_MIN }} position={{ x: 8, y: event.start * PX_PER_MIN }} minHeight={30} dragGrid={[1, 10]} resizeGrid={[1, 10]} onDragStart={() => setSelected(event.id)} onDragStop={(_, d) => moveEvent(event.id, d.y)} onResizeStart={() => setSelected(event.id)} onResizeStop={(_, __, ref, ___, position) => resizeEvent(event.id, ref.offsetHeight, position.y)} onClick={() => setSelected(event.id)}><small>{timeText(event.start)} · {durationText(event.duration)}</small><b>{event.title}</b><span>{STATUS[event.status][0]}</span></Rnd>)}</div>)}</div>
+    </div>{selectedEvent ? <aside className="inspector"><div className="inspector-top"><span>PROGRAM EDIT</span><button onClick={() => setSelected(null)}>×</button></div><h3>競技を編集</h3><label>競技名<input value={selectedEvent.title} onChange={e => update(selected, { title: e.target.value })} /></label><div className="field-row"><label>開始時刻<input type="time" value={timeText(selectedEvent.start)} onChange={e => { const [h, m] = e.target.value.split(':').map(Number); update(selected, { start: Math.max(0, h * 60 + m - 1260) }) }} /></label><label>所要時間<input type="number" min="15" step="5" value={selectedEvent.duration} onChange={e => update(selected, { duration: Math.max(15, Number(e.target.value)) })} /></label></div><label>進行状態<select value={selectedEvent.status} onChange={e => update(selected, { status: e.target.value })}>{Object.entries(STATUS).map(([key, [label]]) => <option value={key} key={key}>{label}</option>)}</select></label><label>参加者へのメモ<textarea rows="4" value={selectedEvent.note} onChange={e => update(selected, { note: e.target.value })} placeholder="集合場所や注意事項など" /></label><button className="delete" onClick={remove}>この競技を削除</button></aside> : <aside className="inspector empty-inspector"><span>↖</span><h3>競技を選択</h3><p>編集したいカードを<br />クリックしてください。</p></aside>}</div>
+  </div>
+}
+
+function Guide({ settings }) { return <section className="guide" id="guide"><div><span className="eyebrow">EVENT GUIDE</span><h2>参加されるみなさまへ</h2></div><div className="guide-cards"><article><Icon>◷</Icon><h3>開始時刻</h3><b>各日 21:00</b><p>全競技終了まで開催します。開始5分前には各ゲーム・通話チャンネルへお集まりください。</p></article><article><Icon>⌖</Icon><h3>開催場所</h3><b>{settings.venue}</b><p>最大3ゲームが同時進行します。参加する競技のステージを必ずご確認ください。</p></article><article><Icon>↻</Icon><h3>試合速報</h3><b>随時更新</b><p>試合の進行状態・時間変更・3チームの総合得点をこのページへ反映します。</p></article></div></section> }
+
+function App() {
+  const [state, setState] = useState(null); const [day, setDay] = useState(DAYS[0][0]); const [login, setLogin] = useState(false); const [token, setToken] = useState(() => sessionStorage.getItem('adminToken'))
+  useEffect(() => { fetch('/api/state').then(r => r.json()).then(setState).catch(() => setState({ settings: { title: 'みんなの運動会 2026', subtitle: '読み込みに失敗しました', venue: '' }, events: [] })) }, [])
+  const complete = useMemo(() => state ? state.events.filter(e => e.status === 'done').length : 0, [state])
+  if (!state) return <div className="loading"><span>UNDOKAI</span><b>準備中...</b></div>
+  function loggedIn(next) { sessionStorage.setItem('adminToken', next); setToken(next); setLogin(false) }
+  function logout() { sessionStorage.removeItem('adminToken'); setToken(null) }
+  return <><Header admin={!!token} settings={state.settings} onAdmin={() => token ? document.querySelector('#schedule')?.scrollIntoView({ behavior: 'smooth' }) : setLogin(true)} /><main><section className="schedule" id="schedule"><div className="section-title"><div><span className="eyebrow">TIME TABLE</span><h2>{token ? '運営スケジュール' : 'タイムテーブル'}</h2></div><div className="progress"><span>全体の進捗</span><b>{complete}<small> / {state.events.length} 競技終了</small></b><i><em style={{ width: `${state.events.length ? complete / state.events.length * 100 : 0}%` }} /></i></div></div><DayTabs day={day} setDay={setDay} events={state.events} /><TeamStandings settings={state.settings} admin={!!token} setState={setState} />{token ? <AdminBoard state={state} setState={setState} day={day} token={token} onLogout={logout} /> : <PublicSchedule events={state.events} day={day} />}</section><Guide settings={state.settings} /></main><footer><div className="brand"><span className="brand-mark"><i /><i /><i /></span><span>UNDOKAI <b>2026</b></span></div><p>3チームでつくる、最高の4日間。</p><small>© 2026 OASIS UNDOKAI PROJECT</small></footer>{login && <Login onClose={() => setLogin(false)} onSuccess={loggedIn} />}</>
+}
+
+createRoot(document.getElementById('root')).render(<App />)
