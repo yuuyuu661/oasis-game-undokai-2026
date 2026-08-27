@@ -2,10 +2,10 @@ import { eventDetails } from './event-details.js'
 
 export const defaults = {
   settings: {
-    schemaVersion: 3,
+    schemaVersion: 4,
     title: '第4回 Oasis大運動会',
     subtitle: '',
-    venue: 'Oasis オンライン会場',
+    venue: 'Oasisライブステージ',
     notice: '各日 21:00 スタート',
     teams: [
       { id: 'red', name: 'フィジで破壊', points: 0, colors: ['#FFA6DA', '#A6F8FF'] },
