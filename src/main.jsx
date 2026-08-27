@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 import { Rnd } from 'react-rnd'
 import './styles.css'
@@ -100,11 +101,16 @@ function RichText({ text }) {
 function EventDetailModal({ event, teams, onClose }) {
   useEffect(() => {
     const close = e => e.key === 'Escape' && onClose()
+    const previousOverflow = document.body.style.overflow
     window.addEventListener('keydown', close)
-    return () => window.removeEventListener('keydown', close)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', close)
+      document.body.style.overflow = previousOverflow
+    }
   }, [onClose])
   const details = event.details || {}
-  return <div className="event-detail-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}>
+  return createPortal(<div className="event-detail-backdrop" onMouseDown={e => e.target === e.currentTarget && onClose()}>
     <article className="event-detail" role="dialog" aria-modal="true" aria-labelledby="event-detail-title">
       <header><div><span className="eyebrow">PROGRAM GUIDE</span><h2 id="event-detail-title">{event.title}</h2></div><button className="close" onClick={onClose} aria-label="閉じる">×</button></header>
       <div className="detail-facts"><div><span>日時</span><b>{details.timing || `${event.date.replace('2026-', '').replace('-', '/')} ${timeText(event.start)}〜`}</b></div><div><span>場所</span><b>{details.venue || STAGES.find(([id]) => id === event.stage)?.[1]}</b></div>{details.format && <div><span>形式</span><b>{details.format}</b></div>}</div>
@@ -115,7 +121,7 @@ function EventDetailModal({ event, teams, onClose }) {
       })}</div></section>}
       {details.rules && <section className="rule-section"><div className="detail-section-title"><span>RULES & NOTES</span><h3>ルール・注意事項</h3></div><RichText text={details.rules} /></section>}
     </article>
-  </div>
+  </div>, document.body)
 }
 
 function PublicSchedule({ events, day, teams }) {

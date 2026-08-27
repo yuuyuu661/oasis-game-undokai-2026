@@ -50,3 +50,6 @@ body{background:linear-gradient(180deg,#eef5ff 0,#f8f9fd 45%,#f4f7fd 100%)}
 .schedule .event-card{background:rgba(255,255,255,.82)}
 .team-board article{background:linear-gradient(rgba(255,255,255,.54),rgba(255,255,255,.54)),linear-gradient(120deg,var(--team-a),var(--team-b))}
 @media(max-width:600px){.schedule{margin-top:14px;margin-bottom:14px;border-radius:0;background-position:center top}.schedule>.section-title{padding:18px 16px;border-radius:14px}.schedule .stage,.schedule .team-board{background:rgba(255,255,255,.94)}.schedule .event-card{background:rgba(255,255,255,.88)}}
+
+/* Keep the event detail above the sticky site header and contain mobile scrolling. */
+.event-detail-backdrop{z-index:1000;height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
