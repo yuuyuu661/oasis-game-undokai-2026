@@ -2,9 +2,9 @@ import { eventDetails } from './event-details.js'
 
 export const defaults = {
   settings: {
-    schemaVersion: 2,
+    schemaVersion: 3,
     title: '第4回 Oasis大運動会',
-    subtitle: '氷晶の輝きとともに、3チームが頂点を競う4日間。',
+    subtitle: '',
     venue: 'Oasis オンライン会場',
     notice: '各日 21:00 スタート',
     teams: [

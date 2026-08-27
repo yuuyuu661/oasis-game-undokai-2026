@@ -41,7 +41,7 @@ function Header({ admin, onAdmin, settings }) {
       <div className="hero-copy">
         <span className="eyebrow"><i /> OASIS GAME FESTIVAL</span>
         <h1>{settings.title}</h1>
-        <p>{settings.subtitle}</p>
+        {settings.subtitle && <p>{settings.subtitle}</p>}
         <div className="hero-meta"><span><Icon>◷</Icon> 9.18 FRI — 9.21 MON</span><span><Icon>▶</Icon> 毎晩 21:00 START</span></div>
       </div>
       <div className="hero-art oasis-emblem" aria-hidden="true" />
