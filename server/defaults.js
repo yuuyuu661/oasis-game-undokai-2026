@@ -2,7 +2,7 @@ import { eventDetails } from './event-details.js'
 
 export const defaults = {
   settings: {
-    schemaVersion: 6,
+    schemaVersion: 7,
     title: '第4回 Oasis大運動会',
     subtitle: '',
     venue: 'Oasisライブステージ',
