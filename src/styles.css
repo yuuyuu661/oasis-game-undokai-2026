@@ -53,3 +53,9 @@ body{background:linear-gradient(180deg,#eef5ff 0,#f8f9fd 45%,#f4f7fd 100%)}
 
 /* Keep the event detail above the sticky site header and contain mobile scrolling. */
 .event-detail-backdrop{z-index:1000;height:100dvh;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+
+/* Public schedule uses sequence-based starts; exact times are not promised. */
+.event-time .relative-time{max-width:68px;font-size:11px;line-height:1.35;letter-spacing:.01em;overflow-wrap:anywhere}
+.guide-cards{grid-template-columns:repeat(4,1fr)}
+@media(max-width:900px){.guide-cards{grid-template-columns:repeat(2,1fr)}.guide-cards article:nth-child(2n){border-right:0}}
+@media(max-width:600px){.event-time .relative-time{max-width:54px;font-size:10px}.guide-cards{grid-template-columns:1fr}.guide-cards article{border-right:0}}

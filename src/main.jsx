@@ -22,6 +22,10 @@ function timeText(minutes) {
   return `${String(Math.floor(total / 60)).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`
 }
 function durationText(n) { return n < 60 ? `${n}分` : `${Math.floor(n / 60)}時間${n % 60 ? `${n % 60}分` : ''}` }
+function publicStartText(event, index) {
+  if (event.date === DAYS[0][0] && index === 0 && event.stage !== 'main') return '応援合戦終了後'
+  return index === 0 ? '21:00' : '前競技終了後'
+}
 function Icon({ children }) { return <span className="icon" aria-hidden="true">{children}</span> }
 
 function Header({ admin, onAdmin, settings }) {
@@ -136,7 +140,7 @@ function PublicSchedule({ events, day, teams }) {
     const list = dayEvents.filter(e => e.stage === id)
     return <section className={`stage stage-${id}`} key={id}><header><span>{en}</span><h3>{label}</h3><em>{list.length} PROGRAMS</em></header>
       <div className="event-list">{list.length ? list.map((event, i) => <article className={`event-card ${STATUS[event.status][1]}`} key={event.id}>
-        <div className="event-time"><b>{timeText(event.start)}</b><span>{durationText(event.duration)}</span></div><div className="event-info"><span className="order">PROGRAM {String(i + 1).padStart(2, '0')}</span><h4>{event.title}</h4>{event.note && <p>{event.note}</p>}{event.details && <button className="detail-link" onClick={() => setDetailEvent(event)}>ルール・結果を見る <span>→</span></button>}</div><span className="status-dot">{STATUS[event.status][0]}</span>
+        <div className="event-time"><b className={i > 0 || (event.date === DAYS[0][0] && event.stage !== 'main') ? 'relative-time' : ''}>{publicStartText(event, i)}</b><span>{durationText(event.duration)}</span></div><div className="event-info"><span className="order">PROGRAM {String(i + 1).padStart(2, '0')}</span><h4>{event.title}</h4>{event.note && <p>{event.note}</p>}{event.details && <button className="detail-link" onClick={() => setDetailEvent(event)}>ルール・結果を見る <span>→</span></button>}</div><span className="status-dot">{STATUS[event.status][0]}</span>
       </article>) : <div className="empty">競技を準備中です</div>}</div>
     </section>
   })}</div>{detailEvent && <EventDetailModal event={detailEvent} teams={teams} onClose={() => setDetailEvent(null)} />}</>
@@ -173,7 +177,7 @@ function AdminBoard({ state, setState, day, token, onLogout }) {
   </div>
 }
 
-function Guide({ settings }) { return <section className="guide" id="guide"><div><span className="eyebrow">EVENT GUIDE</span><h2>参加されるみなさまへ</h2></div><div className="guide-cards"><article><Icon>◷</Icon><h3>開始時刻</h3><b>各日 21:00</b><p>全競技終了まで開催します。開始5分前には各ゲーム・通話チャンネルへお集まりください。</p></article><article><Icon>⌖</Icon><h3>開催場所</h3><b>{settings.venue}</b><p>最大3ゲームが同時進行します。参加する競技のステージを必ずご確認ください。</p></article><article><Icon>↻</Icon><h3>試合速報</h3><b>随時更新</b><p>試合の進行状態・時間変更・3チームの総合得点をこのページへ反映します。</p></article></div></section> }
+function Guide({ settings }) { return <section className="guide" id="guide"><div><span className="eyebrow">EVENT GUIDE</span><h2>参加されるみなさまへ</h2></div><div className="guide-cards"><article><Icon>◷</Icon><h3>競技の進行</h3><b>各日 21:00 START</b><p>各ステージの2競技目以降は開始時刻を設けず、前の競技が終了次第、順番に進行します。</p></article><article><Icon>⌖</Icon><h3>開催場所</h3><b>{settings.venue}</b><p>最大3競技が同時進行します。参加する競技のステージと進行状況を必ずご確認ください。</p></article><article><Icon>✓</Icon><h3>参加前の準備</h3><b>すぐ参加できる状態で</b><p>順番が近づいたら待機し、ゲームのアップデート・ログインは事前に済ませてください。</p></article><article><Icon>!</Icon><h3>掛け持ちについて</h3><b>別ステージは避ける</b><p>別ステージ同士は進行時間が重なる場合があります。同日の別ステージ競技への掛け持ちは避けて申請してください。</p></article></div></section> }
 
 function App() {
   const [state, setState] = useState(null); const [day, setDay] = useState(DAYS[0][0]); const [login, setLogin] = useState(false); const [token, setToken] = useState(() => sessionStorage.getItem('adminToken'))

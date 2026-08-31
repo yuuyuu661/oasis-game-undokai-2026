@@ -7,13 +7,17 @@ const file = path.resolve('data/local.json')
 let pool
 
 function normalizeState(state) {
-  if (!state || state.settings?.schemaVersion >= 5) return state
+  if (!state || state.settings?.schemaVersion >= 6) return state
   const savedTeams = new Map((state.settings?.teams || []).map(team => [team.id, team]))
   const teams = defaults.settings.teams.map(team => ({ ...team, points: Number(savedTeams.get(team.id)?.points || 0) }))
   const defaultEvents = new Map(defaults.events.map(event => [event.id, event]))
   const events = (state.events || defaults.events).map(event => {
     const next = defaultEvents.get(event.id)
-    return next ? { ...next, ...event, title: next.title, details: event.details || next.details } : event
+    if (!next) return event
+    const details = next.details
+      ? { ...next.details, ...(event.details || {}), timing: next.details.timing, venue: next.details.venue }
+      : event.details
+    return { ...next, ...event, title: next.title, details }
   })
   return { ...state, settings: { ...state.settings, ...defaults.settings, teams }, events }
 }
