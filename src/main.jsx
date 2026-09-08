@@ -114,12 +114,7 @@ function EventDetailModal({ event, teams, onClose }) {
     }
   }, [onClose])
   const details = event.details || {}
-  function closeFromBackdrop(e) {
-    if (e.target !== e.currentTarget) return
-    const clickedScrollbar = e.clientX >= e.currentTarget.clientWidth || e.clientY >= e.currentTarget.clientHeight
-    if (!clickedScrollbar) onClose()
-  }
-  return createPortal(<div className="event-detail-backdrop" onMouseDown={closeFromBackdrop}>
+  return createPortal(<div className="event-detail-backdrop">
     <article className="event-detail" role="dialog" aria-modal="true" aria-labelledby="event-detail-title">
       <header><div><span className="eyebrow">PROGRAM GUIDE</span><h2 id="event-detail-title">{event.title}</h2></div><button className="close" onClick={onClose} aria-label="閉じる">×</button></header>
       <div className="detail-facts"><div><span>日時</span><b>{details.timing || `${event.date.replace('2026-', '').replace('-', '/')} ${timeText(event.start)}〜`}</b></div><div><span>場所</span><b>{details.venue || STAGES.find(([id]) => id === event.stage)?.[1]}</b></div>{details.format && <div><span>形式</span><b>{details.format}</b></div>}</div>

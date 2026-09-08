@@ -6,21 +6,25 @@ import { defaults } from './defaults.js'
 const file = path.resolve('data/local.json')
 let pool
 
-function normalizeState(state) {
-  if (!state || state.settings?.schemaVersion >= 7) return state
+export function normalizeState(state) {
+  if (!state || state.settings?.schemaVersion >= defaults.settings.schemaVersion) return state
   const savedTeams = new Map((state.settings?.teams || []).map(team => [team.id, team]))
   const teams = defaults.settings.teams.map(team => ({ ...team, points: Number(savedTeams.get(team.id)?.points || 0) }))
   const defaultEvents = new Map(defaults.events.map(event => [event.id, event]))
   const events = (state.events || defaults.events).map(event => {
     const next = defaultEvents.get(event.id)
     if (!next) return event
+    // Official program details are refreshed by schema migrations. Results entered
+    // by staff remain intact while rules, format and point values move forward.
     const details = next.details
-      ? { ...next.details, ...(event.details || {}), timing: next.details.timing, venue: next.details.venue }
+      ? {
+          ...next.details,
+          timing: event.details?.timing || next.details.timing,
+          venue: event.details?.venue || next.details.venue,
+          results: event.details?.results || next.details.results,
+          mvp: event.details?.mvp || next.details.mvp
+        }
       : event.details
-    if (event.id === 'd4m2' && details) {
-      details.points = next.details.points
-      details.rules = next.details.rules
-    }
     return { ...next, ...event, title: next.title, details }
   })
   return { ...state, settings: { ...state.settings, ...defaults.settings, teams }, events }
