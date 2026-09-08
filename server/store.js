@@ -2,12 +2,16 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import pg from 'pg'
 import { defaults } from './defaults.js'
+import { applyCalculatedTeamPoints } from '../shared/scoring.js'
 
 const file = path.resolve('data/local.json')
 let pool
 
 export function normalizeState(state) {
-  if (!state || state.settings?.schemaVersion >= defaults.settings.schemaVersion) return state
+  if (!state) return state
+  if (state.settings?.schemaVersion >= defaults.settings.schemaVersion) {
+    return applyCalculatedTeamPoints(state)
+  }
   const savedTeams = new Map((state.settings?.teams || []).map(team => [team.id, team]))
   const teams = defaults.settings.teams.map(team => ({ ...team, points: Number(savedTeams.get(team.id)?.points || 0) }))
   const defaultEvents = new Map(defaults.events.map(event => [event.id, event]))
@@ -27,7 +31,7 @@ export function normalizeState(state) {
       : event.details
     return { ...next, ...event, title: next.title, details }
   })
-  return { ...state, settings: { ...state.settings, ...defaults.settings, teams }, events }
+  return applyCalculatedTeamPoints({ ...state, settings: { ...state.settings, ...defaults.settings, teams }, events })
 }
 
 async function getPool() {
@@ -57,7 +61,8 @@ export async function readState() {
 
 export async function writeState(state) {
   const db = await getPool()
-  const payload = { ...state, settings: { ...state.settings, updatedAt: new Date().toISOString() } }
+  const calculated = applyCalculatedTeamPoints(state)
+  const payload = { ...calculated, settings: { ...calculated.settings, updatedAt: new Date().toISOString() } }
   if (db) await db.query('INSERT INTO app_state (id, payload, updated_at) VALUES (1, $1, now()) ON CONFLICT (id) DO UPDATE SET payload = EXCLUDED.payload, updated_at = now()', [payload])
   else {
     await fs.mkdir(path.dirname(file), { recursive: true })

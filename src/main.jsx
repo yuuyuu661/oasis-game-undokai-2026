@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { createRoot } from 'react-dom/client'
 import { Rnd } from 'react-rnd'
 import './styles.css'
+import { applyCalculatedTeamPoints } from '../shared/scoring.js'
 
 const DAYS = [
   ['2026-09-18', '9.18', 'FRI'], ['2026-09-19', '9.19', 'SAT'],
@@ -86,7 +87,7 @@ function TeamStandings({ settings, admin, setState }) {
   function updateTeam(id, changes) {
     setState(s => ({ ...s, settings: { ...s.settings, teams: s.settings.teams.map(team => team.id === id ? { ...team, ...changes } : team) } }))
   }
-  return <section className={admin ? 'team-board editing' : 'team-board'} aria-label="3チーム得点状況"><div className="score-label"><span>TEAM SCORE</span><h3>3チーム得点状況</h3><p>{admin ? 'チーム名と得点を編集できます' : '現在の総合順位'}</p></div>{(admin ? teams : ranked).map((team, i) => <article key={team.id} style={{ '--team-a': team.colors?.[0] || team.color, '--team-b': team.colors?.[1] || team.color }}><span className="rank">{admin ? 'TEAM' : `0${i + 1}`}</span>{admin ? <input aria-label={`${team.name}の名前`} value={team.name} onChange={e => updateTeam(team.id, { name: e.target.value })} /> : <h4>{team.name}</h4>}<div className="team-points">{admin ? <input aria-label={`${team.name}の得点`} type="number" min="0" value={team.points} onChange={e => updateTeam(team.id, { points: Math.max(0, Number(e.target.value)) })} /> : <b>{team.points}</b>}<span>PTS</span></div></article>)}</section>
+  return <section className={admin ? 'team-board editing' : 'team-board'} aria-label="3チーム得点状況"><div className="score-label"><span>TEAM SCORE</span><h3>3チーム得点状況</h3><p>{admin ? '種目別スコアから自動集計されます' : '現在の総合順位'}</p></div>{(admin ? teams : ranked).map((team, i) => <article key={team.id} style={{ '--team-a': team.colors?.[0] || team.color, '--team-b': team.colors?.[1] || team.color }}><span className="rank">{admin ? 'TEAM' : `0${i + 1}`}</span>{admin ? <input aria-label={`${team.name}の名前`} value={team.name} onChange={e => updateTeam(team.id, { name: e.target.value })} /> : <h4>{team.name}</h4>}<div className="team-points"><b>{team.points}</b><span>PTS</span></div></article>)}</section>
 }
 
 function RichText({ text }) {
@@ -178,10 +179,11 @@ function App() {
   const [state, setState] = useState(null); const [day, setDay] = useState(DAYS[0][0]); const [login, setLogin] = useState(false); const [token, setToken] = useState(() => sessionStorage.getItem('adminToken'))
   useEffect(() => { fetch('/api/state').then(r => r.json()).then(setState).catch(() => setState({ settings: { title: '第4回 Oasis大運動会', subtitle: '読み込みに失敗しました', venue: '', teams: [] }, events: [] })) }, [])
   const complete = useMemo(() => state ? state.events.filter(e => e.status === 'done').length : 0, [state])
+  const scoredState = useMemo(() => state ? applyCalculatedTeamPoints(state) : null, [state])
   if (!state) return <div className="loading"><span>UNDOKAI</span><b>準備中...</b></div>
   function loggedIn(next) { sessionStorage.setItem('adminToken', next); setToken(next); setLogin(false) }
   function logout() { sessionStorage.removeItem('adminToken'); setToken(null) }
-  return <><Header admin={!!token} settings={state.settings} onAdmin={() => token ? document.querySelector('#schedule')?.scrollIntoView({ behavior: 'smooth' }) : setLogin(true)} /><main><section className="schedule" id="schedule"><div className="section-title"><div><span className="eyebrow">TIME TABLE</span><h2>{token ? '運営スケジュール' : 'タイムテーブル'}</h2></div><div className="progress"><span>全体の進捗</span><b>{complete}<small> / {state.events.length} 競技終了</small></b><i><em style={{ width: `${state.events.length ? complete / state.events.length * 100 : 0}%` }} /></i></div></div><DayTabs day={day} setDay={setDay} events={state.events} /><TeamStandings settings={state.settings} admin={!!token} setState={setState} />{token ? <AdminBoard state={state} setState={setState} day={day} token={token} onLogout={logout} /> : <PublicSchedule events={state.events} day={day} teams={state.settings.teams || []} />}</section><Guide settings={state.settings} /></main><footer><div className="brand"><span className="brand-mark"><i /><i /><i /></span><span>OASIS <b>UNDOKAI</b></span></div><p>3チームでつくる、最高の4日間。</p><small>© 2026 OASIS UNDOKAI PROJECT</small></footer>{login && <Login onClose={() => setLogin(false)} onSuccess={loggedIn} />}</>
+  return <><Header admin={!!token} settings={state.settings} onAdmin={() => token ? document.querySelector('#schedule')?.scrollIntoView({ behavior: 'smooth' }) : setLogin(true)} /><main><section className="schedule" id="schedule"><div className="section-title"><div><span className="eyebrow">TIME TABLE</span><h2>{token ? '運営スケジュール' : 'タイムテーブル'}</h2></div><div className="progress"><span>全体の進捗</span><b>{complete}<small> / {state.events.length} 競技終了</small></b><i><em style={{ width: `${state.events.length ? complete / state.events.length * 100 : 0}%` }} /></i></div></div><DayTabs day={day} setDay={setDay} events={state.events} /><TeamStandings settings={scoredState.settings} admin={!!token} setState={setState} />{token ? <AdminBoard state={state} setState={setState} day={day} token={token} onLogout={logout} /> : <PublicSchedule events={state.events} day={day} teams={scoredState.settings.teams || []} />}</section><Guide settings={state.settings} /></main><footer><div className="brand"><span className="brand-mark"><i /><i /><i /></span><span>OASIS <b>UNDOKAI</b></span></div><p>3チームでつくる、最高の4日間。</p><small>© 2026 OASIS UNDOKAI PROJECT</small></footer>{login && <Login onClose={() => setLogin(false)} onSuccess={loggedIn} />}</>
 }
 
 createRoot(document.getElementById('root')).render(<App />)
