@@ -129,6 +129,20 @@ function EventDetailModal({ event, teams, onClose }) {
   </div>, document.body)
 }
 
+function EventScoreSummary({ event, teams }) {
+  const results = event.details?.results
+  if (!results) return null
+  return <div className="event-score-summary" aria-label={`${event.title}の獲得ポイント`}>
+    {teams.map(team => {
+      const score = results[team.id]?.score
+      return <span className="event-score" key={team.id} style={{ '--team-a': team.colors?.[0] || team.color, '--team-b': team.colors?.[1] || team.color }}>
+        <small title={team.name}>{team.name}</small>
+        <b>{score === '' || score == null ? '—' : score}<em>pt</em></b>
+      </span>
+    })}
+  </div>
+}
+
 function PublicSchedule({ events, day, teams }) {
   const [detailEvent, setDetailEvent] = useState(null)
   const dayEvents = events.filter(e => e.date === day).sort((a, b) => a.start - b.start)
@@ -136,7 +150,7 @@ function PublicSchedule({ events, day, teams }) {
     const list = dayEvents.filter(e => e.stage === id)
     return <section className={`stage stage-${id}`} key={id}><header><span>{en}</span><h3>{label}</h3><em>{list.length} PROGRAMS</em></header>
       <div className="event-list">{list.length ? list.map((event, i) => <article className={`event-card ${STATUS[event.status][1]}`} key={event.id}>
-        <div className="event-time"><b className={i > 0 || (event.date === DAYS[0][0] && event.stage !== 'main') ? 'relative-time' : ''}>{publicStartText(event, i)}</b></div><div className="event-info"><span className="order">PROGRAM {String(i + 1).padStart(2, '0')}</span><h4>{event.title}</h4>{event.note && <p>{event.note}</p>}{event.details && <button className="detail-link" onClick={() => setDetailEvent(event)}>ルール・結果を見る <span>→</span></button>}</div><span className="status-dot">{STATUS[event.status][0]}</span>
+        <div className="event-time"><b className={i > 0 || (event.date === DAYS[0][0] && event.stage !== 'main') ? 'relative-time' : ''}>{publicStartText(event, i)}</b></div><div className="event-info"><span className="order">PROGRAM {String(i + 1).padStart(2, '0')}</span><h4>{event.title}</h4>{event.note && <p>{event.note}</p>}{event.details && <button className="detail-link" onClick={() => setDetailEvent(event)}>ルール・結果を見る <span>→</span></button>}<EventScoreSummary event={event} teams={teams} /></div><span className="status-dot">{STATUS[event.status][0]}</span>
       </article>) : <div className="empty">競技を準備中です</div>}</div>
     </section>
   })}</div>{detailEvent && <EventDetailModal event={detailEvent} teams={teams} onClose={() => setDetailEvent(null)} />}</>

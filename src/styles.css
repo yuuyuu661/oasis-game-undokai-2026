@@ -56,6 +56,12 @@ body{background:linear-gradient(180deg,#eef5ff 0,#f8f9fd 45%,#f4f7fd 100%)}
 
 /* Public schedule uses sequence-based starts; exact times are not promised. */
 .event-time .relative-time{max-width:68px;font-size:11px;line-height:1.35;letter-spacing:.01em;overflow-wrap:anywhere}
+.event-info{min-width:0}
+.event-score-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:10px}
+.event-score{min-width:0;padding:5px 6px 4px;background:linear-gradient(120deg,color-mix(in srgb,var(--team-a) 20%,white),color-mix(in srgb,var(--team-b) 20%,white));border-top:3px solid var(--team-a)}
+.event-score small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:7px;color:#5d6470}
+.event-score b{display:block;margin-top:2px;font-size:13px;line-height:1}
+.event-score em{margin-left:2px;font-size:6px;font-style:normal;color:#777}
 .guide-cards{grid-template-columns:repeat(4,1fr)}
 @media(max-width:900px){.guide-cards{grid-template-columns:repeat(2,1fr)}.guide-cards article:nth-child(2n){border-right:0}}
 @media(max-width:600px){.event-time .relative-time{max-width:54px;font-size:10px}.guide-cards{grid-template-columns:1fr}.guide-cards article{border-right:0}}
