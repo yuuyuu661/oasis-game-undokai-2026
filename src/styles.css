@@ -65,3 +65,17 @@ body{background:linear-gradient(180deg,#eef5ff 0,#f8f9fd 45%,#f4f7fd 100%)}
 .guide-cards{grid-template-columns:repeat(4,1fr)}
 @media(max-width:900px){.guide-cards{grid-template-columns:repeat(2,1fr)}.guide-cards article:nth-child(2n){border-right:0}}
 @media(max-width:600px){.event-time .relative-time{max-width:54px;font-size:10px}.guide-cards{grid-template-columns:1fr}.guide-cards article{border-right:0}}
+
+/* Cheer battle movie */
+.cheer-movie{padding:82px clamp(20px,7vw,105px) 96px;background:radial-gradient(circle at 82% 18%,#0fc7e52b,transparent 27%),linear-gradient(135deg,var(--navy-deep),var(--navy));color:#fff}
+.cheer-movie-heading{width:min(1100px,100%);margin:0 auto 30px}
+.cheer-movie-heading .eyebrow{color:var(--gold)}
+.cheer-movie-heading h2{font-size:clamp(34px,5vw,54px);letter-spacing:-.05em;margin:8px 0 10px}
+.cheer-movie-heading p{max-width:680px;margin:0;color:#b6c8e2;font-size:13px;line-height:1.8}
+.cheer-video-frame{width:min(1100px,100%);aspect-ratio:16/9;margin:auto;overflow:hidden;background:#01071f;border:1px solid #9acfff52;box-shadow:0 28px 80px #0008}
+.cheer-video-frame iframe{display:block;width:100%;height:100%;border:0}
+.cheer-video-pending{height:100%;display:grid;place-content:center;gap:9px;text-align:center;background:radial-gradient(circle,#0fc7e51f,transparent 45%)}
+.cheer-video-pending span{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 8px;padding-left:5px;border:1px solid #a6f8ff66;border-radius:50%;color:var(--gold);font-size:25px}
+.cheer-video-pending b{font-size:20px}
+.cheer-video-pending p{margin:0;color:#91a7c6;font-size:11px;letter-spacing:.1em}
+@media(max-width:600px){.cheer-movie{padding:58px 15px 68px}.cheer-movie-heading{margin-bottom:20px}.cheer-movie-heading p{font-size:12px}.cheer-video-frame{border-radius:8px}.cheer-video-pending span{width:52px;height:52px;font-size:20px}.cheer-video-pending b{font-size:16px}}

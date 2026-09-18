@@ -37,7 +37,7 @@ function Header({ admin, onAdmin, settings }) {
         <span>OASIS <b>UNDOKAI</b></span>
       </a>
       <nav aria-label="ページ内メニュー">
-        <a href="#schedule">タイムテーブル</a><a href="#guide">ご案内</a>
+        <a href="#schedule">タイムテーブル</a><a href="#cheer-movie">応援合戦風景</a>
         <button className={admin ? 'admin-button active' : 'admin-button'} onClick={onAdmin}>
           <Icon>⚙</Icon>{admin ? '運営モード中' : '運営ページ'}
         </button>
@@ -187,7 +187,16 @@ function AdminBoard({ state, setState, day, token, onLogout }) {
   </div>
 }
 
-function Guide({ settings }) { return <section className="guide" id="guide"><div><span className="eyebrow">EVENT GUIDE</span><h2>参加されるみなさまへ</h2></div><div className="guide-cards"><article><Icon>◷</Icon><h3>競技の進行</h3><b>各日 21:00 START</b><p>各ステージの2競技目以降は開始時刻を設けず、前の競技が終了次第、順番に進行します。</p></article><article><Icon>⌖</Icon><h3>開催場所</h3><b>{settings.venue}</b><p>最大3競技が同時進行します。参加する競技のステージと進行状況を必ずご確認ください。</p></article><article><Icon>✓</Icon><h3>参加前の準備</h3><b>すぐ参加できる状態で</b><p>順番が近づいたら待機し、ゲームのアップデート・ログインは事前に済ませてください。</p></article><article><Icon>!</Icon><h3>掛け持ちについて</h3><b>別ステージは避ける</b><p>別ステージ同士は進行時間が重なる場合があります。同日の別ステージ競技への掛け持ちは避けて申請してください。</p></article></div></section> }
+const CHEER_VIDEO_ID = import.meta.env.VITE_CHEER_VIDEO_ID || '55Z1mcN2EWM'
+
+function CheerMovie() {
+  return <section className="cheer-movie" id="cheer-movie">
+    <div className="cheer-movie-heading"><span className="eyebrow">CHEER BATTLE MOVIE</span><h2>応援合戦風景</h2><p>第4回 Oasis大運動会を盛り上げた、各チームの応援合戦をご覧ください。</p></div>
+    <div className="cheer-video-frame">
+      {CHEER_VIDEO_ID ? <iframe src={`https://www.youtube-nocookie.com/embed/${CHEER_VIDEO_ID}?rel=0`} title="第4回 Oasis大運動会 応援合戦風景" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen /> : <div className="cheer-video-pending"><span>▶</span><b>応援合戦ムービー</b><p>動画を準備しています</p></div>}
+    </div>
+  </section>
+}
 
 function App() {
   const [state, setState] = useState(null); const [day, setDay] = useState(DAYS[0][0]); const [login, setLogin] = useState(false); const [token, setToken] = useState(() => sessionStorage.getItem('adminToken'))
@@ -197,7 +206,7 @@ function App() {
   if (!state) return <div className="loading"><span>UNDOKAI</span><b>準備中...</b></div>
   function loggedIn(next) { sessionStorage.setItem('adminToken', next); setToken(next); setLogin(false) }
   function logout() { sessionStorage.removeItem('adminToken'); setToken(null) }
-  return <><Header admin={!!token} settings={state.settings} onAdmin={() => token ? document.querySelector('#schedule')?.scrollIntoView({ behavior: 'smooth' }) : setLogin(true)} /><main><section className="schedule" id="schedule"><div className="section-title"><div><span className="eyebrow">TIME TABLE</span><h2>{token ? '運営スケジュール' : 'タイムテーブル'}</h2></div><div className="progress"><span>全体の進捗</span><b>{complete}<small> / {state.events.length} 競技終了</small></b><i><em style={{ width: `${state.events.length ? complete / state.events.length * 100 : 0}%` }} /></i></div></div><DayTabs day={day} setDay={setDay} events={state.events} /><TeamStandings settings={scoredState.settings} admin={!!token} setState={setState} />{token ? <AdminBoard state={state} setState={setState} day={day} token={token} onLogout={logout} /> : <PublicSchedule events={state.events} day={day} teams={scoredState.settings.teams || []} />}</section><Guide settings={state.settings} /></main><footer><div className="brand"><span className="brand-mark"><i /><i /><i /></span><span>OASIS <b>UNDOKAI</b></span></div><p>3チームでつくる、最高の4日間。</p><small>© 2026 OASIS UNDOKAI PROJECT</small></footer>{login && <Login onClose={() => setLogin(false)} onSuccess={loggedIn} />}</>
+  return <><Header admin={!!token} settings={state.settings} onAdmin={() => token ? document.querySelector('#schedule')?.scrollIntoView({ behavior: 'smooth' }) : setLogin(true)} /><main><section className="schedule" id="schedule"><div className="section-title"><div><span className="eyebrow">TIME TABLE</span><h2>{token ? '運営スケジュール' : 'タイムテーブル'}</h2></div><div className="progress"><span>全体の進捗</span><b>{complete}<small> / {state.events.length} 競技終了</small></b><i><em style={{ width: `${state.events.length ? complete / state.events.length * 100 : 0}%` }} /></i></div></div><DayTabs day={day} setDay={setDay} events={state.events} /><TeamStandings settings={scoredState.settings} admin={!!token} setState={setState} />{token ? <AdminBoard state={state} setState={setState} day={day} token={token} onLogout={logout} /> : <PublicSchedule events={state.events} day={day} teams={scoredState.settings.teams || []} />}</section><CheerMovie /></main><footer><div className="brand"><span className="brand-mark"><i /><i /><i /></span><span>OASIS <b>UNDOKAI</b></span></div><p>3チームでつくる、最高の4日間。</p><small>© 2026 OASIS UNDOKAI PROJECT</small></footer>{login && <Login onClose={() => setLogin(false)} onSuccess={loggedIn} />}</>
 }
 
 createRoot(document.getElementById('root')).render(<App />)
